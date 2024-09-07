@@ -43,7 +43,7 @@ public:
         }
     }
 
-    void push(const std::function<void()>& task) {
+    void commit(const std::function<void()>& task) {
         std::unique_lock<std::mutex> lock(queue_mutex_);
         if (stop_) {
             return;

@@ -13,12 +13,22 @@
 
 class GParam {
 protected:
+    /**
+     * exec before all node run.
+     * @return
+     */
     virtual CStatus setup() {
         return CStatus();
     }
 
+    /**
+     * exec after all node run finished.
+     * @param curStatus
+     */
     virtual void reset(const CStatus& curStatus) {
     }
+
+    friend class GParamManager;
 };
 
 #endif //CGRAPH_LITE_PARAM_H
