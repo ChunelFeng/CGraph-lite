@@ -29,12 +29,12 @@ public:
      * @return
      */
     CStatus process(size_t times = 1) {
-        auto status = init();
-        while (times-- && status.isOK()) {
-            status += run();
+        init();
+        while (times-- && status_.isOK()) {
+            run();
         }
-        status += destroy();
-        return status;
+        destroy();
+        return status_;
     }
 
     /**
@@ -53,8 +53,7 @@ public:
         if (std::any_of(depends.begin(), depends.end(), [](GElement* ptr) {
             return !ptr;
         })) {
-            // no allow empty input
-            return CStatus("input is null");
+            return CStatus("input is null");    // no allow empty input
         }
 
         (*elementRef) = new(std::nothrow) T();
@@ -64,27 +63,25 @@ public:
     }
 
 protected:
-    CStatus init() {
-        CStatus status;
+    void init() {
+        status_ = CStatus();
         for (auto* element : elements_) {
-            status += element->init();
+            status_ += element->init();
         }
         schedule_ = std::make_unique<Schedule>();
-        return status;
     }
 
-    CStatus run() {
+    void run() {
         setup();
         executeAll();
-        return fetchResult();
+        reset();
     }
 
-    CStatus destroy() {
-        CStatus status;
+    void destroy() {
         for (auto* element : elements_) {
-            status += element->destroy();
+            status_ += element->destroy();
         }
-        return status;
+        schedule_.reset();
     }
 
     void executeAll() {
@@ -117,20 +114,7 @@ protected:
         }
     }
 
-    CStatus fetchResult() {
-        {
-            std::unique_lock<std::mutex> lk(execute_mutex_);
-            execute_cv_.wait(lk, [this] {
-                return finished_size_ >= elements_.size() || !status_.isOK();
-            });
-        }
-
-        param_manager_.reset(status_);
-        return status_;
-    }
-
     void setup() {
-        status_ = CStatus();
         finished_size_ = 0;
         for (auto* element : elements_) {
             element->left_depend_ = element->dependence_.size();
@@ -139,6 +123,17 @@ protected:
         status_ += param_manager_.setup();
     }
 
+    void reset() {
+        // wait for all node finished
+        {
+            std::unique_lock<std::mutex> lk(execute_mutex_);
+            execute_cv_.wait(lk, [this] {
+                return finished_size_ >= elements_.size() || !status_.isOK();
+            });
+        }
+
+        param_manager_.reset(status_);
+    }
 
 private:
     std::vector<GElement *> elements_ {};

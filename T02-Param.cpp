@@ -13,9 +13,8 @@
 const std::string& kParamKey = "param_key";
 
 struct MyParam : public GParam {
-    CStatus setup() override {
+    void reset(const CStatus& curStatus) override {
         val_ = 0;
-        return CStatus();
     }
 
     int val_ { 0 };

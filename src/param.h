@@ -9,9 +9,14 @@
 #ifndef CGRAPH_LITE_PARAM_H
 #define CGRAPH_LITE_PARAM_H
 
+#include <mutex>
+
 #include "status.h"
 
 class GParam {
+public:
+    std::mutex _param_shared_lock_;
+
 protected:
     /**
      * exec before all node run.
