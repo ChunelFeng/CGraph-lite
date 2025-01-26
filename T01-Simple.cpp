@@ -9,8 +9,9 @@
 #include <iostream>
 #include <chrono>
 
-#include "./src/CGraph-lite.h"
+#include "CGraph-lite.h"
 
+using namespace CGraphLite;
 
 class MyNode1 : public GNode {
     CStatus run() override {

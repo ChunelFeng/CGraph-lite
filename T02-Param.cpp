@@ -8,7 +8,9 @@
 
 #include <iostream>
 
-#include "./src/CGraph-lite.h"
+#include "CGraph-lite.h"
+
+using namespace CGraphLite;
 
 const std::string& kParamKey = "param_key";
 
