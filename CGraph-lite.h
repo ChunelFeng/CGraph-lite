@@ -1,9 +1,9 @@
 /***************************
 @Author: Chunel
 @Contact: chunel@foxmail.com
-@File: CGraph.h
+@File: CGraph-lite.h
 @Time: 2024/9/6 20:33
-@Desc: 
+@Desc:
 ***************************/
 
 #ifndef CGRAPH_LITE_CGRAPH_LITE_H
@@ -73,20 +73,11 @@ public:
     std::mutex _param_shared_lock_;
 
 protected:
-    /**
-     * exec before all node run.
-     * @return
-     */
     virtual CStatus setup() {
         return CStatus();
     }
 
-    /**
-     * exec after all node run finished.
-     * @param curStatus
-     */
-    virtual void reset(const CStatus& curStatus) {
-    }
+    virtual void reset(const CStatus& curStatus) {}
 
     friend class GParamManager;
 };
@@ -112,11 +103,7 @@ protected:
     template<typename T, std::enable_if_t<std::is_base_of<GParam, T>::value, int> = 0>
     T* get(const std::string& key) {
         auto iter = params_.find(key);
-        if (iter == params_.end()) {
-            return nullptr;
-        }
-
-        return dynamic_cast<T *>(iter->second);
+        return iter != params_.end() ? dynamic_cast<T *>(iter->second) : nullptr;
     }
 
     CStatus setup() {
@@ -260,11 +247,6 @@ private:
 
 class GPipeline {
 public:
-    /**
-     * init() + run(n) + destroy()
-     * @param times
-     * @return
-     */
     CStatus process(size_t times = 1) {
         init();
         while (times-- && status_.isOK()) {
@@ -274,16 +256,7 @@ public:
         return status_;
     }
 
-    /**
-     * register element(node) into pipeline
-     * @tparam T
-     * @param elementRef
-     * @param depends
-     * @param name
-     * @return
-     */
-    template<typename T,
-            std::enable_if_t<std::is_base_of<GElement, T>::value, int> = 0>
+    template<typename T, std::enable_if_t<std::is_base_of<GElement, T>::value, int> = 0>
     CStatus registerGElement(GElement** elementRef,
                              const std::set<GElement *> &depends,
                              const std::string &name) {
@@ -355,7 +328,6 @@ protected:
     }
 
     void reset() {
-        // wait for all node finished
         {
             std::unique_lock<std::mutex> lk(execute_mutex_);
             execute_cv_.wait(lk, [this] {
@@ -380,8 +352,7 @@ private:
 class GPipelineFactory {
 public:
     static GPipeline* create() {
-        auto pipeline = new GPipeline();
-        return pipeline;
+        return new GPipeline();
     }
 
     static CStatus remove(GPipeline* pipeline) {
